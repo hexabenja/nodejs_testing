@@ -1,0 +1,48 @@
+# Render Blueprint para deploy automático
+# Documenta la infraestructura completa de la app
+
+services:
+  # Backend API
+  - type: web
+    name: test-app-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # Frontend (Como Web Service con Docker y Nginx)
+  - type: web
+    name: test-app-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: test-app-backend
+          envVarKey: RENDER_EXTERNAL_URL
+    autoDeploy: true
+
+# Alternativamente, el frontend puede ser un Static Site:
+# - type: web
+#   name: test-app-frontend-static
+#   runtime: static
+#   buildCommand: cd frontend && npm install && npm run build
+#   staticPublishPath: ./frontend/dist
+#   envVars:
+#     - key: VITE_API_URL
+#       value: https://test-app-backend.onrender.com
+#   headers:
+#     - path: /*
+#       name: Cache-Control
+#       value: public, max-age=0, must-revalidate
+#     - path: /assets/*
+#       name: Cache-Control
+#       value: public, max-age=31536000, immutable

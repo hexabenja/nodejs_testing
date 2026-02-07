@@ -65,7 +65,54 @@ npm run build
 
 ## 🌐 Deploy en Servidor
 
-### Opción 1: Deploy con PM2 (Recomendado)
+### Opción 1: Deploy en Render.com (Recomendado - Con Docker) 🐳
+
+**La forma más fácil de hacer deploy en producción:**
+
+1. Sube tu código a GitHub/GitLab
+2. Ve a [Render.com](https://render.com) y crea una cuenta
+3. Sigue la guía completa en **[RENDER_DEPLOY.md](./RENDER_DEPLOY.md)**
+
+**TL;DR:**
+- **Backend**: New Web Service → Runtime: Docker → Deploy
+- **Frontend**: New Static Site o Web Service con Docker
+- **Costo**: Gratis para testing (con limitaciones) o $7/mes por servicio
+
+### Opción 2: Deploy con Docker (Local o VPS)
+
+**Deploy con docker-compose (Más fácil):**
+```bash
+# Clonar o subir el proyecto
+git clone tu-repo.git
+cd test-app
+
+# Iniciar ambos servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Detener
+docker-compose down
+```
+
+**Deploy manual con Docker:**
+
+Backend:
+```bash
+cd backend
+docker build -t test-app-backend .
+docker run -d -p 3001:3001 --name backend test-app-backend
+```
+
+Frontend:
+```bash
+cd frontend
+docker build -t test-app-frontend .
+docker run -d -p 80:80 --name frontend test-app-frontend
+```
+
+### Opción 3: Deploy con PM2 (VPS tradicional)
 
 **1. Instalar PM2:**
 ```bash
@@ -88,35 +135,9 @@ npm run build
 # Copia el contenido de /dist a tu servidor web
 ```
 
-### Opción 2: Deploy con Docker
+Ver guía completa en **[DEPLOY.md](./DEPLOY.md)**
 
-**Dockerfile Backend:**
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY backend/package*.json ./
-RUN npm install --production
-COPY backend/ ./
-RUN npm run build
-EXPOSE 3001
-CMD ["npm", "start"]
-```
-
-**Dockerfile Frontend:**
-```dockerfile
-FROM node:18-alpine AS build
-WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm install
-COPY frontend/ ./
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-```
-
-### Opción 3: Deploy en servicios cloud
+### Opción 4: Deploy en otros servicios cloud
 
 **Vercel (Frontend):**
 ```bash
@@ -125,10 +146,10 @@ npm install -g vercel
 vercel
 ```
 
-**Railway/Render (Backend):**
+**Railway/Fly.io (Backend con Docker):**
 - Conecta tu repositorio
-- Configura build command: `npm run build`
-- Configura start command: `npm start`
+- Detecta automáticamente el Dockerfile
+- Deploy con un click
 
 ## 🔧 Variables de Entorno
 
@@ -159,12 +180,25 @@ VITE_API_URL=https://tu-backend-url.com
 - ✅ CORS configurado
 - ✅ Manejo de errores
 - ✅ Hot reload en desarrollo
+- ✅ Dockerfiles optimizados multi-stage
+- ✅ Docker Compose para desarrollo local
+- ✅ Configuración Nginx incluida
+- ✅ Listo para Render.com
+- ✅ Guías de deploy completas
 
 ## 🛠️ Tecnologías
 
 - **Backend**: Express, TypeScript, CORS
 - **Frontend**: React, TypeScript, Vite
 - **Build**: TSC, Vite
+- **Deploy**: Docker, Docker Compose, PM2, Nginx
+
+## 🐳 Archivos Docker Incluidos
+
+- `backend/Dockerfile` - Imagen optimizada del backend
+- `frontend/Dockerfile` - Imagen del frontend con Nginx
+- `docker-compose.yml` - Orquestación de ambos servicios
+- `.dockerignore` - Optimización de builds
 
 ## 📝 Notas
 
