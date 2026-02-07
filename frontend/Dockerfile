@@ -11,29 +11,24 @@ RUN npm install
 # Copiar código fuente
 COPY . .
 
-# Compilar TypeScript
+# Argumentos de build para variables de entorno de Vite
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+# Build de producción
 RUN npm run build
 
-# Etapa de producción
-FROM node:18-alpine
+# Etapa de producción con nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copiar archivos build al directorio de nginx
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiar package files
-COPY package*.json ./
+# Copiar configuración personalizada de nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Instalar solo dependencias de producción
-RUN npm install --omit=dev
+# Exponer puerto 80
+EXPOSE 80
 
-# Copiar código compilado desde la etapa de build
-COPY --from=build /app/dist ./dist
-
-# Exponer puerto
-EXPOSE 3001
-
-# Variables de entorno por defecto
-ENV NODE_ENV=production
-ENV PORT=3001
-
-# Comando para iniciar la aplicación
-CMD ["node", "dist/index.js"]
+# Iniciar nginx
+CMD ["nginx", "-g", "daemon off;"]
