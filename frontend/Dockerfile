@@ -6,25 +6,34 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm ci
+RUN npm install
 
 # Copiar código fuente
 COPY . .
 
-# Build de producción
+# Compilar TypeScript
 RUN npm run build
 
-# Etapa de producción con nginx
-FROM nginx:alpine
+# Etapa de producción
+FROM node:18-alpine
 
-# Copiar archivos build al directorio de nginx
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copiar configuración personalizada de nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar package files
+COPY package*.json ./
 
-# Exponer puerto 80
-EXPOSE 80
+# Instalar solo dependencias de producción
+RUN npm install --omit=dev
 
-# Iniciar nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copiar código compilado desde la etapa de build
+COPY --from=build /app/dist ./dist
+
+# Exponer puerto
+EXPOSE 3001
+
+# Variables de entorno por defecto
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Comando para iniciar la aplicación
+CMD ["node", "dist/index.js"]
