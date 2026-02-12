@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import path from 'path';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -7,6 +8,11 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Servir archivos estáticos del frontend (en producción)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../public')));
+}
 
 // Tipos
 interface TestItem {
@@ -22,8 +28,8 @@ let tests: TestItem[] = [
   { id: 2, name: 'Test de API', status: 'passed', timestamp: new Date().toISOString() },
 ];
 
-// Rutas
-app.get('/', (req: Request, res: Response) => {
+// Rutas de API (deben estar ANTES del catch-all del frontend)
+app.get('/api', (req: Request, res: Response) => {
   res.json({ 
     message: '🚀 API de Testeo funcionando correctamente',
     version: '1.0.0',
@@ -67,6 +73,14 @@ app.post('/api/tests', (req: Request, res: Response) => {
   tests.push(newTest);
   res.status(201).json({ success: true, data: newTest });
 });
+
+// Servir el frontend para cualquier otra ruta (SPA routing)
+// IMPORTANTE: Este debe ser el ÚLTIMO para que no capture las rutas de API
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
